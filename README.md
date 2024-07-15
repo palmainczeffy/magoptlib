@@ -23,3 +23,7 @@ Interested in contributing? Check out the contributing guidelines. Please note t
 ## Credits
 
 `magoptlib` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
+
+This package is inspired by dipy, which provided the foundational ideas for the spherical harmonic coefficient calcuation.
+
+
