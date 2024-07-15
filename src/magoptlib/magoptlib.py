@@ -3,6 +3,14 @@ import scipy.special as sps
 from magoptlib.load_text import load_text, text_to_array
 
 def import_data(input_file):
+    """ Import data from the input json file.
+    
+    Parameters
+    ----------
+    input_file : str
+        The input file in json format.
+
+    """
 
     data=load_text(input_file)
     b_values, phi_values, theta_values = text_to_array(data)
@@ -23,10 +31,10 @@ def get_sh(m_values, l_values, theta, phi):
         (l=0, 1, 2, ...) is the degree of the spherical harmonics, which determines the complexity of the function.
 
     theta : array_like
-        The polar coordinate.
+        The polar angle values.
 
     phi : array_like
-        The azimuthal coordinate.
+        The azimuthal angle values.
     
     Returns
     -------
@@ -59,10 +67,10 @@ def modified_sh(max_sh_order, theta, phi):
         The maximum spherical harmonics order (l_max).    
     
     theta : array_like
-        The polar coordinate.
+        The polar angle values.
     
     phi : array_like
-        The azimuthal coordinate.
+        The azimuthal angle values.
 
     Returns
     -------
