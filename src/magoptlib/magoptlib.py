@@ -1,6 +1,13 @@
 import numpy as np
 import scipy.special as sps
+from magoptlib.load_text import load_text, text_to_array
 
+def import_data(input_file):
+
+    data=load_text(input_file)
+    b_values, phi_values, theta_values = text_to_array(data)
+
+    return b_values, phi_values, theta_values
 
 def get_sh(m_values, l_values, theta, phi):
     """ Compute the spherical harmonics. 
