@@ -101,6 +101,7 @@ def modified_sh(max_sh_order, theta, phi):
 
     return real_sh, m_values, l_values
 
+# Adapted from dipy for the computation of the pseudo-inverse
 def pseudo_inv(real_sh, L):
     """ Compute the pseudo-inverse of a matrix.
     
@@ -129,7 +130,7 @@ def pseudo_inv(real_sh, L):
     inv = np.linalg.pinv(np.concatenate((real_sh, L)))
     return inv[:, : len(real_sh)]
 
-
+# Adapted from dipy for the computation of the spherical harmonics coefficients
 def get_sh_coeff(real_sh, m_values, l_values, b_values):
     """ Compute the spherical harmonics coefficients.
     
@@ -157,7 +158,7 @@ def get_sh_coeff(real_sh, m_values, l_values, b_values):
     Examples
     --------
     >>> sh_coeff=get_sh_coeff(real_sh, m_values, l_values, b_values)
-    
+
     """
     smooth=0
     L = -l_values * (l_values + 1)
