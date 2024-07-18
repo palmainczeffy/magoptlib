@@ -10,6 +10,8 @@ def import_data(input_file):
     input_file : str
         The input file in json format.
 
+    
+
     """
 
     data=load_text(input_file)
@@ -175,8 +177,10 @@ def get_sh_coeff(real_sh, m_values, l_values, b_values):
     >>> sh_coeff=get_sh_coeff(real_sh, m_values, l_values, b_values)
 
     """
+    #Laplace–Beltrami regularization, reduces error if l>4
     smooth=0
     L = -l_values * (l_values + 1)
     inv_real_sh = pseudo_inv(real_sh, np.sqrt(smooth) * L)
-    sh_coeff = np.dot(b_values, inv_real_sh.T)/1000
+    sh_coeff = np.dot(b_values, inv_real_sh.T)
+    
     return sh_coeff
