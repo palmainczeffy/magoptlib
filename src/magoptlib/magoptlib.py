@@ -1,43 +1,46 @@
 import numpy as np
 import scipy.special as sps
 from magoptlib.load_text import load_text, text_to_array
+from sklearn.linear_model import Lasso
+
 
 def import_data(input_file):
     """ Import data from the input json file.
-    
+
     Parameters
     ----------
     input_file : str
         The input file in json format.
-
-    
-
     """
 
-    data=load_text(input_file)
+    data = load_text(input_file)
     b_values, phi_values, theta_values = text_to_array(data)
 
     return b_values, phi_values, theta_values
 
+
 def get_sh(m_values, l_values, theta, phi):
-    """ Compute the spherical harmonics. 
-     
-    Compute the spherical harmonics for the given m and l values, based on scipy.special.sph_harm.
+    """ Compute the spherical harmonics.
+
+    Compute the spherical harmonics for the given m and l values, based on
+    scipy.special.sph_harm.
 
     Parameters
     ----------
     m_values : array_like
-        (m=-l,...,+l) is the order, specifies the azimuthal variation within a given degree l.
+        (m=-l,...,+l) is the order, specifies the azimuthal variation within a
+        given degree l.
 
     l_values : array_like
-        (l=0, 1, 2, ...) is the degree of the spherical harmonics, which determines the complexity of the function.
+        (l=0, 1, 2, ...) is the degree of the spherical harmonics, which
+        determines the complexity of the function.
 
     theta : array_like
-        The polar angle values.
+        The polar angle values, between 0 and 180 degrees.
 
     phi : array_like
-        The azimuthal angle values.
-    
+        The azimuthal angle values, between 0 and 360 degrees.
+
     Returns
     -------
     sh : array_like
@@ -49,28 +52,29 @@ def get_sh(m_values, l_values, theta, phi):
 
     Notes
     -----
-    MagOptLib uses the same convention as scipy, where theta represents the polar coordinate and phi represents the azimuthal coordinate.
-    
+    MagOptLib uses the same convention as scipy, where theta represents the
+    polar coordinate and phi represents the azimuthal coordinate.
+
     """
 
     sh = sps.sph_harm(m_values, l_values, theta, phi, dtype=complex)
-    
+
     return sh
+
 
 def modified_sh(max_sh_order, theta, phi):
     r"""
     Compute the modified spherical harmonics.
 
-    Modified spherical harmonics basis up to order max_sh_order, based on [1]. The new basis is symmetric, real and orthonormal.
+    Modified spherical harmonics basis up to order max_sh_order, based on [1].
+    The new basis is symmetric, real and orthonormal.
 
     Parameters
     ----------
     max_sh_order : int
-        The maximum spherical harmonics order (l_max).    
-    
+        The maximum spherical harmonics order (l_max).
     theta : array_like
         The polar angle values.
-    
     phi : array_like
         The azimuthal angle values.
 
@@ -80,10 +84,12 @@ def modified_sh(max_sh_order, theta, phi):
         Real spherical harmonics basis.
 
     m_values : array_like
-        (m=-l,...,+l) is the order, specifies the azimuthal variation within a given degree l.
+        (m=-l,...,+l) is the order, specifies the azimuthal variation within a
+        given degree l.
 
     l_values : array_like
-        (l=0, 1, 2, ...) is the degree of the spherical harmonics, which determines the complexity of the function.
+        (l=0, 1, 2, ...) is the degree of the spherical harmonics,
+        which determines the complexity of the function.
 
     Examples
     --------
@@ -95,14 +101,10 @@ def modified_sh(max_sh_order, theta, phi):
         Regularized, Fast, and Robust Analytical Q-ball Imaging.
         Magn. Reson. Med. 2007;58:497-510.
     """
-
-
-    l_range = np.arange(0, max_sh_order + 1, 2, dtype=int)
-
-
+    # l_range = np.arange(0, max_sh_order + 1, 2, dtype=int)
+    l_range = np.arange(0, max_sh_order + 1, 1, dtype=int)
     # Generate l_values by repeating each l in l_range for (2*l + 1) times
     l_values = np.repeat(l_range, l_range * 2 + 1)
-    
     # Generate m_values for each l, ranging from -l to l
     m_values = np.concatenate([np.arange(-l, l + 1) for l in l_range])
 
@@ -112,75 +114,166 @@ def modified_sh(max_sh_order, theta, phi):
 
     # Compute the modified spherical harmonics
     sh = get_sh(np.abs(m_values), l_values, phi, theta)
-    
     real_sh = np.where(m_values > 0, sh.imag, sh.real)
     real_sh *= np.where(m_values == 0, 1.0, np.sqrt(2))
 
     return real_sh, m_values, l_values
 
+
 # Adapted from dipy for the computation of the pseudo-inverse
 def pseudo_inv(real_sh, L):
     """ Compute the pseudo-inverse of a matrix.
-    
+
     Compute the pseudo-inverse of a matrix using the Moore-Penrose inverse.
-    
+
     Parameters
     ----------
     real_sh : array_like
         Real spherical harmonics basis.
-        
     L : array_like
         Regularization matrix.
-        
+
     Returns
     -------
     inv : array_like
         The pseudo-inverse of the matrix.
-    
+
     Examples
     --------
     >>> inv_real_sh = pseudo_inv(real_sh, np.sqrt(smooth) * L)
-    
+
     """
 
     L = np.diag(L)
     inv = np.linalg.pinv(np.concatenate((real_sh, L)))
     return inv[:, : len(real_sh)]
 
+
 # Adapted from dipy for the computation of the spherical harmonics coefficients
-def get_sh_coeff(real_sh, m_values, l_values, b_values):
+def get_sh_coeff(real_sh, m_values, l_values, b_values, smooth=0):
     """ Compute the spherical harmonics coefficients.
-    
-    Compute the spherical harmonics coefficients based on the modified, real spherical harmonics basis, m_values, l_values and b_values.
-    
+
+    Compute the spherical harmonics coefficients based on the modified,
+    real spherical harmonics basis, m_values, l_values and b_values.
+
     Parameters
     ----------
     real_sh : array_like
         Real spherical harmonics basis.
-    
+
     m_values : array_like
-        (m=-l,...,+l) is the order, specifies the azimuthal variation within a given degree l.
-        
+        (m=-l,...,+l) is the order, the azimuthal variation within a degree l.
+
     l_values : array_like
-        (l=0, 1, 2, ...) is the degree of the spherical harmonics, which determines the complexity of the function.
-    
+        (l=0, 1, 2, ...) is the degree of SH, the complexity of the function.
+
     b_values : array_like
         The spherical harmonics signal, in our case the magnetic field values.
-    
+
     Returns
     -------
     sh_coeff : array_like
         The spherical harmonics coefficients.
-    
+
     Examples
     --------
     >>> sh_coeff=get_sh_coeff(real_sh, m_values, l_values, b_values)
 
     """
-    #Laplace–Beltrami regularization, reduces error if l>4
-    smooth=0
+    # Laplace–Beltrami regularization, reduces error if l>4
     L = -l_values * (l_values + 1)
     inv_real_sh = pseudo_inv(real_sh, np.sqrt(smooth) * L)
     sh_coeff = np.dot(b_values, inv_real_sh.T)
-    
+    return sh_coeff, inv_real_sh
+
+
+def sparse_isotropic_regularization(real_sh, b_values, alpha=0.1):
+    """
+    Compute SH coefficients using Sparse Isotropic Regularization (L1).
+
+    Parameters:
+    ----------
+    real_sh : np.array
+        Real spherical harmonics basis matrix, shape (n_samples, n_sh).
+    b_values : np.array
+        Data values to fit, shape (n_samples,).
+    alpha : float, optional
+        Regularization strength for L1 penalty. Default is 0.01.
+
+    Returns:
+    -------
+    sh_coeff : np.array
+        The SH coefficients with sparse isotropic regularization,
+        shape (n_sh,).
+    """
+    # Create Lasso model with L1 regularization (alpha controls the strength)
+    lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=10000)
+
+    # Fit the model to compute SH coefficients
+    lasso.fit(real_sh, b_values)
+
+    # Get the SH coefficients from the Lasso model
+    sh_coeff = lasso.coef_
+
     return sh_coeff
+
+
+def field_outside_sphere(radius, R, theta, phi, max_sh_order):
+    """ Real spherical harmonics basis for magnetic field outside the sphere.
+
+    Compute the magnetic field outside a sphere using the modified spherical
+    harmonics basis with radial component.
+
+    Parameters
+    ----------
+    radius : array_like
+        The radial distance values.
+
+    R : float
+        The radius of the sphere.
+
+    theta : array_like
+
+    phi : array_like
+
+    max_sh_order : int
+
+    Returns
+    -------
+    real_sh_with_radial : array_like
+        Real spherical harmonics basis with radial component.
+
+    m_values : array_like
+        (m=-l,...,+l) is the order, specifies the azimuthal variation within a
+        given degree l.
+
+    l_values : array_like
+        (l=0, 1, 2, ...) is the degree of the spherical harmonics, which
+        determines the complexity of the function.
+
+    radial_comp : array_like
+        The radial component.
+    """
+
+    # l_range = np.arange(0, max_sh_order + 1, 2, dtype=int)
+    l_range = np.arange(0, max_sh_order + 1, 1, dtype=int)
+    # Generate l_values by repeating each l in l_range for (2*l + 1) times
+    l_values = np.repeat(l_range, l_range * 2 + 1)
+    # Generate m_values for each l, ranging from -l to l
+    m_values = np.concatenate([np.arange(-l, l + 1) for l in l_range])
+
+    # Return phi and theta into column vectors
+    radius = np.reshape(radius, [-1, 1])
+    phi = np.reshape(phi, [-1, 1])
+    theta = np.reshape(theta, [-1, 1])
+
+    # Compute the modified spherical harmonics
+    sh = get_sh(np.abs(m_values), l_values, phi, theta)
+    real_sh = np.where(m_values > 0, sh.imag, sh.real)
+    real_sh *= np.where(m_values == 0, 1.0, np.sqrt(2))
+
+    radial_comp = (R/radius) ** (l_values+1)
+    # Combine the radial component with the spherical harmonics
+    real_sh_with_radial = real_sh * radial_comp
+
+    return real_sh_with_radial, m_values, l_values, radial_comp
