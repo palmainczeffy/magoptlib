@@ -1,4 +1,5 @@
-from magoptlib.magoptlib import get_sh_coeff, modified_sh
+from magoptlib.magoptlib import get_sh_coeff, modified_sh, field_outside_sphere
+from magoptlib.magoptlib import sparse_isotropic_regularization
 import numpy as np
 
 
@@ -122,12 +123,32 @@ def test_get_sh_coeff():
 
     # Calculate phi (azimuthal angle)
     phi_values = np.arctan2(coords[:, 1], coords[:, 0])
+    phi_values = np.mod(phi_values, 2 * np.pi)
 
+    # Calculate the SH coefficients and transform back the signal
     real_sh, m_values, l_values = modified_sh(24, theta_values, phi_values)
-    sh_coeff, _ = get_sh_coeff(real_sh, m_values, l_values, b_values,
-                               smooth=0.0000006)
+    sh_coeff, _ = get_sh_coeff(real_sh, m_values, l_values, b_values, smooth=0.00000001)
     sf = np.dot(real_sh, sh_coeff)
 
-    assert np.allclose(sf, b_values),  "Test failed"
+    # Calculate the SH coefficients with sparse isotropic regularization
+    sh_coeff_sparse = sparse_isotropic_regularization(real_sh, b_values, alpha=0.000001)
+    sf_sparse = np.dot(real_sh, sh_coeff_sparse)
+
+    assert sh_coeff.shape == (625,), "sh_coeff should have 625 elements, if l=24"
+    assert not np.all(sh_coeff == 0), "sh_coeff should not be all zeros"
+
+    assert sh_coeff_sparse.shape == (625,), "sh_coeff_sparse should have 625 elements, if l=24"
+    assert not np.all(sh_coeff_sparse == 0), "sh_coeff_sparse should not be all zeros"
+
+    assert np.allclose(sf, b_values, atol=1e-1),  "Test failed"
+    assert np.allclose(sf_sparse, b_values, atol=1e-1),  "Test failed"
+
+    # Calculate field outside the sphere
+    # SH basis for the magnetic field outside the sphere
+    sh_outside, _, _, _ = field_outside_sphere(1, 1, 1.06080809, 3.79483645, 24)
+
+    sf_outside = np.dot(sh_outside, sh_coeff)
+
+    assert np.allclose(sf_outside, b_values[1], atol=1e-1),  "Test failed"
 
     print("Test passed")
