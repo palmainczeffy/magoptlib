@@ -31,5 +31,5 @@ def test_global_to_loc_spherical():
     assert np.isclose(r, np.sqrt(3))
     assert np.isclose(theta, np.arccos(-1/np.sqrt(3)))
     assert np.isclose(phi, -3*np.pi/4)
-    
 
+    print("Test passed")
