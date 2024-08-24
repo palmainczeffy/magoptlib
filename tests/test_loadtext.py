@@ -1,19 +1,20 @@
-from magoptlib import magoptlib 
-from magoptlib import load_text
-from magoptlib.load_text import load_text, text_to_array
-from magoptlib.magoptlib import get_sh_coeff, modified_sh
+from magoptlib.load_text import text_to_array
 import numpy as np
 
 
-data=load_text("tests/test_simulation_cubic_magnet_12mm_3_randompolarisation.mag.pkl.mag.json")
-b_values, phi_values, theta_values = text_to_array(data)
+def test_text_to_array():
+    # Load data from the file
+    b_values, phi_values, theta_values = text_to_array("tests/test_simulation_cubic_magnet_12mm_3_randompolarisation.mag.pkl.mag.json")
 
-print(b_values)
-print(phi_values)
-print(theta_values)
+    # Convert to np arrays
+    b_values = np.asarray(b_values)
+    phi_values = np.asarray(phi_values)
+    theta_values = np.asarray(theta_values)
 
-print(np.asarray(b_values).shape[0])
-print(np.asarray(phi_values).shape[0])
-print(np.asarray(theta_values).shape[0])
+    # Check the shapes of the arrays
+    assert b_values.shape[0] == 648, "b_values should have 648 elements"
+    assert phi_values.shape[0] == 648, "phi_values should have 648 elements"
+    assert theta_values.shape[0] == 648, "theta_values should have 648 elements"
 
-assert np.allclose(np.asarray(b_values).shape[0], 648),  "Test failed"
+    assert np.all((0 <= theta_values) & (theta_values <= np.pi)), "theta must be between 0 and π radians"
+    assert np.all((0 <= phi_values) & (phi_values <= 2*np.pi)), "phi must be between 0 and 2π radians"
