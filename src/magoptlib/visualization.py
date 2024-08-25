@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-#from mpl_toolkits.mplot3d import Axes3D
-# Create a 3D plot
 
 
 def create_fig(x, y, z):
@@ -20,5 +18,6 @@ def create_fig(x, y, z):
 
     plt.title("Visualization of the measurement points")
 
-
     plt.show()
+
+    return fig, ax
