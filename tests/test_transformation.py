@@ -1,8 +1,10 @@
 import numpy as np
 from magoptlib.transformation import global_to_loc_spherical
 
+
 def test_global_to_loc_spherical():
-    # Point at x=1 
+
+    # Point at x=1
     r, theta, phi = global_to_loc_spherical(1, 0, 0, 0, 0, 0)
     assert np.isclose(r, 1)
     assert np.isclose(theta, np.pi/2)
