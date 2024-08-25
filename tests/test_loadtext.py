@@ -3,7 +3,6 @@ import numpy as np
 
 
 def test_text_to_array():
-    """ Test the text_to_array function. """
 
     # Load data from the file
     b_values, phi_values, theta_values = text_to_array("tests/test_simulation_cubic_magnet_12mm_3_randompolarisation.mag.pkl.mag.json")
