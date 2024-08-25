@@ -3,6 +3,8 @@ import numpy as np
 
 
 def test_text_to_array():
+    """ Test the text_to_array function. """
+
     # Load data from the file
     b_values, phi_values, theta_values = text_to_array("tests/test_simulation_cubic_magnet_12mm_3_randompolarisation.mag.pkl.mag.json")
 
@@ -18,3 +20,5 @@ def test_text_to_array():
 
     assert np.all((0 <= theta_values) & (theta_values <= np.pi)), "theta must be between 0 and π radians"
     assert np.all((0 <= phi_values) & (phi_values <= 2*np.pi)), "phi must be between 0 and 2π radians"
+
+    print("Test passed")
