@@ -11,6 +11,7 @@ python = ">=3.11"
 numpy = ">=1.26.0, <2.0.0"
 scipy = ">=1.13.0"
 matplotlib =">=3.7"
+scikit-learn = "^1.5.1"
 
 
 [tool.poetry.dev-dependencies]
