@@ -21,7 +21,8 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax", 
-    "nbsphinx"
+    "nbsphinx", 
+    "sphinx_math_dollar"
 ]
 
 mathjax_config = {
