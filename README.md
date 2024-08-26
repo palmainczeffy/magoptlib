@@ -8,6 +8,9 @@ For installing the library, use:
 ```bash
 $ pip install magoptlib
 ```
+## ReadTheDocs
+
+[magoptlib.readthedocs.io](https://magoptlib.readthedocs.io/en/latest/)
 
 ## Usage
 
