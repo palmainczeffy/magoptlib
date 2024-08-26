@@ -17,9 +17,10 @@ build:
       - pip install poetry
       - pip install sphinx
       - pip install sphinx_math_dollar
+      - pip install sphinx.ext.mathjax
     post_install:
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install
-      - pip install sphinx.ext.mathjax
+      
       
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
