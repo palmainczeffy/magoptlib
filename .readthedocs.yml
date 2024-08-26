@@ -16,7 +16,7 @@ build:
       # https://python-poetry.org/docs/#installing-manually
       - pip install poetry
       - pip install sphinx
-      - pip install sphinx_math_dollar
+      - pip install sphinx-math-dollar
       - pip install nbsphinx
     post_install:
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install
