@@ -11,7 +11,7 @@ $ pip install magoptlib
 
 ## Usage
 
-Please find an example usage in the introduction.ipynb file.
+Please find an example usage in the documentation or in the introduction.ipynb file.
 
 ## Contributing
 
