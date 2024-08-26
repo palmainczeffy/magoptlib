@@ -20,8 +20,7 @@ extensions = [
     "autoapi.extension",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx.ext.mathjax", 
-    "sphinx_math_dollar"
+    "sphinx.ext.mathjax"
 ]
 
 mathjax_config = {
