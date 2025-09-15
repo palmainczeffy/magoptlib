@@ -1,4 +1,4 @@
-from magoptlib.load_text import text_to_array
+from load_text import text_to_array
 import numpy as np
 
 

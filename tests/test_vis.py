@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from magoptlib.visualization import create_fig
+from visualization import create_fig
 
 
 def test_create_fig():
