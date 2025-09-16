@@ -3,6 +3,12 @@ import cupy as cp
 from scipy.linalg import pinv
 from .sh_gpu import compute_sh_matrix_gpu
 
+def get_m_l_vals(max_sh_order):
+    l_range = np.arange(0, max_sh_order + 1, dtype=int)
+    l_values = np.repeat(l_range, l_range * 2 + 1)
+    m_values = np.concatenate([np.arange(-l, l+1) for l in l_range])
+    return m_values, l_values
+
 # Convert B to spherical coordinates (CPU)
 def cartesian2spherical_cpu(Bx, By, Bz, theta_vals, phi_vals):
     n_magnets, n_points = Bx.shape

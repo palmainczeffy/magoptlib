@@ -7,6 +7,9 @@ import cupyx.scipy.special as cpx_sc
 from math import factorial as math_factorial, pi
 
 
+
+
+
 def normalization_gpu(l, m):
     """
     Compute the normalization constant for real spherical harmonics on the GPU.
