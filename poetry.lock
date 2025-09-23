@@ -650,7 +650,7 @@ description = "CuPy: NumPy & SciPy for GPU"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "extra == \"true\""
+markers = "extra == \"cuda12\""
 files = [
     {file = "cupy_cuda12x-13.0.0-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:a59a271c2e7bb08eb5afc34ce69fbfd3ee1b9700bafbdf43e7e994b15ddc670e"},
     {file = "cupy_cuda12x-13.0.0-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:79ff0786dce91f3e940f1388ae370e3e612ac09d4578362805047da0845377ab"},
@@ -815,7 +815,7 @@ description = "Fast, re-entrant optimistic lock implemented in Cython"
 optional = true
 python-versions = "*"
 groups = ["main"]
-markers = "extra == \"true\""
+markers = "extra == \"cuda12\""
 files = [
     {file = "fastrlock-0.8.3-cp27-cp27m-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:bbbe31cb60ec32672969651bf68333680dacaebe1a1ec7952b8f5e6e23a70aa5"},
     {file = "fastrlock-0.8.3-cp27-cp27m-manylinux_2_5_x86_64.manylinux1_x86_64.whl", hash = "sha256:45055702fe9bff719cdc62caa849aa7dbe9e3968306025f639ec62ef03c65e88"},
@@ -1801,6 +1801,30 @@ files = [
 ]
 
 [[package]]
+name = "magpylib"
+version = "5.1.1"
+description = "Free Python3 package to compute magnetic fields."
+optional = false
+python-versions = ">=3.10"
+groups = ["main"]
+files = [
+    {file = "magpylib-5.1.1-py3-none-any.whl", hash = "sha256:ec643faf433f0a01ff1eb64a4fbf6f55cb09c992533427f2c32bade81cb8c0b2"},
+    {file = "magpylib-5.1.1.tar.gz", hash = "sha256:be339e034fd72cb9792e95375fd2705c1c5c82e877eaafa280db80bc6851b6ef"},
+]
+
+[package.dependencies]
+matplotlib = ">=3.6"
+numpy = ">=1.23"
+plotly = ">=5.16"
+scipy = ">=1.8"
+
+[package.extras]
+binder = ["jupyterlab (>=3.2)", "jupyterlab-myst", "jupytext"]
+code-style = ["pre-commit"]
+docs = ["magpylib-force", "magpylib-material-response", "myst-nb", "numpy-stl", "pandas", "pydata-sphinx-theme", "pyvista", "sphinx (==7.3)", "sphinx-copybutton", "sphinx-design", "sphinx-favicon", "sphinx-gallery", "sphinx-thebe"]
+test = ["coverage", "imageio[ffmpeg,tifffile]", "ipywidgets", "jupyterlab", "pandas", "pylint (>3.0)", "pytest (>=7.4)", "pyvista", "tox (>=4.11)"]
+
+[[package]]
 name = "markdown-it-py"
 version = "3.0.0"
 description = "Python port of markdown-it. Markdown parsing, done right!"
@@ -2078,6 +2102,31 @@ linkify = ["linkify-it-py (>=2.0,<3.0)"]
 rtd = ["ipython", "sphinx (>=7)", "sphinx-autodoc2 (>=0.5.0,<0.6.0)", "sphinx-book-theme (>=1.1,<2.0)", "sphinx-copybutton", "sphinx-design", "sphinx-pyscript", "sphinx-tippy (>=0.4.3)", "sphinx-togglebutton", "sphinxext-opengraph (>=0.9.0,<0.10.0)", "sphinxext-rediraffe (>=0.2.7,<0.3.0)"]
 testing = ["beautifulsoup4", "coverage[toml]", "defusedxml", "pytest (>=8,<9)", "pytest-cov", "pytest-param-files (>=0.6.0,<0.7.0)", "pytest-regressions", "sphinx-pytest"]
 testing-docutils = ["pygments", "pytest (>=8,<9)", "pytest-param-files (>=0.6.0,<0.7.0)"]
+
+[[package]]
+name = "narwhals"
+version = "2.5.0"
+description = "Extremely lightweight compatibility layer between dataframe libraries"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "narwhals-2.5.0-py3-none-any.whl", hash = "sha256:7e213f9ca7db3f8bf6f7eff35eaee6a1cf80902997e1b78d49b7755775d8f423"},
+    {file = "narwhals-2.5.0.tar.gz", hash = "sha256:8ae0b6f39597f14c0dc52afc98949d6f8be89b5af402d2d98101d2f7d3561418"},
+]
+
+[package.extras]
+cudf = ["cudf (>=24.10.0)"]
+dask = ["dask[dataframe] (>=2024.8)"]
+duckdb = ["duckdb (>=1.0)"]
+ibis = ["ibis-framework (>=6.0.0)", "packaging", "pyarrow-hotfix", "rich"]
+modin = ["modin"]
+pandas = ["pandas (>=1.1.3)"]
+polars = ["polars (>=0.20.4)"]
+pyarrow = ["pyarrow (>=13.0.0)"]
+pyspark = ["pyspark (>=3.5.0)"]
+pyspark-connect = ["pyspark[connect] (>=3.5.0)"]
+sqlframe = ["sqlframe (>=3.22.0,!=3.39.3)"]
 
 [[package]]
 name = "nbclient"
@@ -2444,6 +2493,30 @@ files = [
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
 type = ["mypy (>=1.8)"]
+
+[[package]]
+name = "plotly"
+version = "6.3.0"
+description = "An open-source interactive data visualization library for Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "plotly-6.3.0-py3-none-any.whl", hash = "sha256:7ad806edce9d3cdd882eaebaf97c0c9e252043ed1ed3d382c3e3520ec07806d4"},
+    {file = "plotly-6.3.0.tar.gz", hash = "sha256:8840a184d18ccae0f9189c2b9a2943923fd5cae7717b723f36eef78f444e5a73"},
+]
+
+[package.dependencies]
+narwhals = ">=1.15.1"
+packaging = "*"
+
+[package.extras]
+dev = ["plotly[dev-optional]"]
+dev-build = ["build", "jupyter", "plotly[dev-core]"]
+dev-core = ["pytest", "requests", "ruff (==0.11.12)"]
+dev-optional = ["anywidget", "colorcet", "fiona (<=1.9.6) ; python_version <= \"3.8\"", "geopandas", "inflect", "numpy", "orjson", "pandas", "pdfrw", "pillow", "plotly-geo", "plotly[dev-build]", "plotly[kaleido]", "polars[timezone]", "pyarrow", "pyshp", "pytz", "scikit-image", "scipy", "shapely", "statsmodels", "vaex ; python_version <= \"3.9\"", "xarray"]
+express = ["numpy"]
+kaleido = ["kaleido (>=1.0.0)"]
 
 [[package]]
 name = "pluggy"
@@ -3886,9 +3959,9 @@ doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linke
 test = ["big-O", "importlib-resources ; python_version < \"3.9\"", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more-itertools", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
 
 [extras]
-true = ["cupy-cuda12x"]
+cuda12 = ["cupy-cuda12x"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "a2e8a5859a683ed388b5d4d83679608699584d687b80db2736b799181dcfcbcb"
+content-hash = "0e2279d3e49d6c1cac4ef909a743b6ea2f3c66e2124fc729666265714b309f0e"
