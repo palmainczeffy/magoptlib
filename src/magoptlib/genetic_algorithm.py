@@ -340,7 +340,7 @@ def genetic_algorithm_gpu(
                 angle_vectors_cpu = cp.asnumpy(angle_vectors)  # (pop_size, d)
 
                 # best_idx = np.argmax(fitnesses_cpu) # max fitness wins
-                best_idx = np.argmin(fitnesses_cpu)  # min fitness wins
+                best_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
 
                 best_f = fitnesses_cpu[best_idx]
 
