@@ -14,61 +14,77 @@ def fibonacci_lattice(n_theta, n_phi):
     return theta, phi
 
 
-def simulate_magnetic_measurement(n_theta=10, n_phi=10, n_magnets=1, radius=50, noise_level=0.01, noise=False):
-    """
-    Simulate synthetic magnetic field measurements using a Fibonacci lattice sensor arrangement.
-    
-    Parameters:
-        n_theta (int): Vertical resolution of lattice
-        n_phi (int): Horizontal resolution of lattice
-        n_magnets (int): Number of magnet samples (can simulate multiple identical ones)
-        radius (float): Radius of the spherical sensor surface
-        noise_level (float): Relative Gaussian noise level (0 = no noise)
-    
-    Returns:
-        Tuple (Bx, By, Bz) of shape (n_magnets, n_points)
+def simulate_magnetic_measurement(
+    n_theta: int = 10,
+    n_phi: int = 10,
+    radius: float = 50,
+    noise_level: float = 0.01,
+    noise: bool = False,
+    magnet: magpy.magnet.Cuboid | None = None
+):
+    """Simulate synthetic magnetic field measurements using a Fibonacci lattice.
+    Parameters
+    ----------
+    n_theta, n_phi:
+        Discretisation of the Fibonacci lattice in polar and azimuthal direction.
+    radius:
+        Radius of the spherical surface of the measurement sphere.
+    noise_level:
+        Relative standard deviation of the Gaussian noise.
+    noise:
+        If ``True`` Gaussian noise is added independently to each field component.
+    magnet:
+        Optional `magpylib` magnet object. Default is a 12 mm cubic magnet with
+        a polarisation of ``(0, 0, 1390)`` [mT].
+    Returns
+    -------
+    tuple of ``numpy.ndarray``
+        Arrays ``Bx``, ``By`` and ``Bz`` of shape ``(n_points,)`` containing the
+        magnetic field at each lattice point, as well as the polar coordinates
+        ``theta_values`` and ``phi_values`` used to construct the lattice.
+    Examples
+    --------
+    The function returns one-dimensional arrays that can easily be promoted to
+    the ``(n_magnets, n_points)`` shape used by the GPU-accelerated routines.
+
+    >>> Bx, By, Bz, theta, phi = simulate_magnetic_measurement(n_theta=10, n_phi=10)
+
+    Repeating the measurement in a loop and concatenating along the first axis
+    yields the demanded structure:
+
+    >>> measurements = [
+    ...    simulate_magnetic_measurement(n_theta=10, n_phi=10)
+    ...    for _ in range(16)
+    ...]
+    >>> Bx, By, Bz, theta, phi = (
+    ...    np.stack([fields[idx] for fields in measurements], axis=0)
+    ...    for idx in range(5)
+    ... )
+    >>> assert Bx.shape == By.shape == Bz.shape == (16, 100)
     """
     theta_values, phi_values = fibonacci_lattice(n_theta, n_phi)
-    n_points = n_theta * n_phi
-
+    # n_points = n_theta * n_phi
     # Convert spherical coordinates to Cartesian coordinates
     x_r = np.sin(theta_values) * np.cos(phi_values) * radius
     y_r = np.sin(theta_values) * np.sin(phi_values) * radius
     z_r = np.cos(theta_values) * radius
+    meas_positions = np.stack((x_r, y_r, z_r), axis=-1)
 
-    # Define the magnet
-    magnet = magpy.magnet.Cuboid(
-        polarization=(0, 0, 1390),
-        dimension=(12, 12, 12),
-        position=(0, 0, 0),
-    )
+    # Define magnet if not provided
+    if magnet is None:
+        magnet = magpy.magnet.Cuboid(
+            polarization=(0, 0, 1390),
+            dimension=(12, 12, 12),
+            position=(0, 0, 0),
+        )
 
-    # Define sensors at calculated positions
-    sensors = [magpy.Sensor(position=(x_r[i], y_r[i], z_r[i])) for i in range(n_points)]
-
-    # Simulate magnetic field
-    B = magpy.getB(magnet, sensors, sumup=False)  # shape: (n_points, 3)
-
-    # Initialize arrays
-    Bx = np.zeros((n_magnets, n_points), dtype=np.float64)
-    By = np.zeros((n_magnets, n_points), dtype=np.float64)
-    Bz = np.zeros((n_magnets, n_points), dtype=np.float64)
-
-    # Repeat for each magnet (can be used for data augmentation)
-    for i in range(n_magnets):
-        Bx_i, By_i, Bz_i = B[:, 0], B[:, 1], B[:, 2]
-
-        if noise == True:
-        # Optional: Add Gaussian noise (1% of magnitude)
-            Bx_i += np.random.normal(0, noise_level * np.abs(Bx_i), Bx_i.shape)
-            By_i += np.random.normal(0, noise_level * np.abs(By_i), By_i.shape)
-            Bz_i += np.random.normal(0, noise_level * np.abs(Bz_i), Bz_i.shape)
-
-        Bx[i], By[i], Bz[i] = Bx_i, By_i, Bz_i
-    # Save results to files for later use
-    # if noise == True:
-    #         np.save("Bx_with_noise.npy", Bx)
-    #         np.save("By_with_noise.npy", By)
-    #         np.save("Bz_with_noise.npy", Bz)
+    # Define sensors at the measurement positions
+    sensors = [magpy.Sensor(position=position) for position in meas_positions]
+    B = magpy.getB(magnet, sensors, sumup=False).astype(np.float64)  # (n_points, 3)
+    Bx, By, Bz = B[:, 0], B[:, 1], B[:, 2]
+    if noise:
+        rng = np.random.default_rng()
+        Bx = Bx + rng.normal(0, noise_level * np.abs(Bx), size=Bx.shape)
+        By = By + rng.normal(0, noise_level * np.abs(By), size=By.shape)
+        Bz = Bz + rng.normal(0, noise_level * np.abs(Bz), size=Bz.shape)
     return Bx, By, Bz, theta_values, phi_values
-
