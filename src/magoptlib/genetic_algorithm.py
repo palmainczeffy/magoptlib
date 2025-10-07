@@ -313,6 +313,101 @@ def genetic_algorithm_gpu(
         # Elitism: clone the top n_elite individuals
         elite_idx = sorted_idx[:n_elite]
         elites = population[elite_idx].copy()
+        
+        if parent_selection == 'ACROMUSE_adaptive':
+            w_raw = fitnesses_cpu.copy()  # keep raw fitnesses for later use
+            w = w_raw / w_raw.sum()
+
+            B_total_cpu = cp.asnumpy(B_total_gpu)  # (pop_size, 3)
+            angle_vectors_cpu = cp.asnumpy(angle_vectors)  # (pop_size, d)
+
+            # best_idx = np.argmax(fitnesses_cpu) # max fitness wins
+            best_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
+
+            best_f = fitnesses_cpu[best_idx]
+
+            global_best = best_f
+            # global_best_angles = angle_vectors_cpu[best_idx]
+
+            new_pop = np.empty((population_size, d), dtype=population.dtype)
+            angle_range = np.max(angle_vectors_cpu) - np.min(angle_vectors_cpu)
+
+            elite_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
+            elite = population[elite_idx].copy()
+            new_pop[0] = elite
+
+            if np.cos(angle_vectors_cpu).any() < -1.0 or np.cos(angle_vectors_cpu).any() > 1.0:
+                print("Warning: cos(angle_vectors) out of [-1, 1] range!")
+                print("cos angles", np.cos(angle_vectors_cpu))
+            if np.sin(angle_vectors_cpu).any() < -1.0 or np.sin(angle_vectors_cpu).any() > 1.0:
+                print("sin angles", np.sin(angle_vectors_cpu))
+            C = np.sum(np.cos(angle_vectors_cpu), axis=0) * (1/population_size)
+            S = np.sum(np.sin(angle_vectors_cpu), axis=0) * (1/population_size)
+            if np.abs(C).any() > 1.0 or np.abs(S).any() > 1.0:
+                print("Warning: cos/sin angles out of [-1, 1] range!")
+                print("C:", C, "S:", S)
+            R = np.sqrt(C**2 + S**2)  # (d,)
+            if np.any(-2 * np.log(R)<0):
+                print("Warning: R is too small, leading to negative std!")
+                print("C:", C)
+                print("S:", S)
+                print("R:", R)
+                print("cos angles", np.cos(angle_vectors_cpu))
+                print("sin angles", np.sin(angle_vectors_cpu))
+            G_std = np.sqrt(-2 * np.log(R))  # (d,) std of angles in radians
+            SPD = float(np.mean(G_std / angle_range)) 
+
+            w = fitnesses_cpu / fitnesses_cpu.sum()  # (P,)
+
+            C_w = np.sum(w[:, None] * np.cos(angle_vectors_cpu), axis=0)
+
+            S_w = np.sum(w[:, None] * np.sin(angle_vectors_cpu), axis=0)
+            R_w = np.sqrt(C_w**2 + S_w**2)
+            if np.any(-2 * np.log(R_w)<0):
+                print("Warning: R_w is too small, leading to negative std!")
+                print("R_w:", R_w)
+
+            G_w_std = np.sqrt(-2 * np.log(R_w))  # std of angles in radians
+
+            HPD = float(np.mean(G_w_std / angle_range))  # scalar
+            HPD_values[gen] = HPD
+            SPD_values[gen] = SPD
+
+            SPD_max = 0.4
+            HPD_max = 0.3
+            K1 = 0.4
+            K2 = 0.8
+            K = 0.5
+            P_c = (SPD / SPD_max)*(K2-K1) + K1
+            P_div = ((SPD_max - SPD)/SPD_max)*K
+            f_max = np.max(w_raw)
+            f_min = np.min(w_raw)
+            for i in range(population_size-1):
+                if np.random.rand() < P_c:
+                    # Exploitation: uniform crossover, low mutation
+                    mom, _ = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
+                    dad, _ = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
+                    # uniform crossover
+                    toss = np.random.rand(d)
+                    child = np.where(toss < 0.5, mom, dad) 
+                    # Low mutation
+                    mask = np.random.rand(d) < 0.01
+                    child[mask] = np.random.randint(0, n, size=mask.sum())
+                    # children.append(child)
+                    new_pop[i+1, :] = child.copy()
+                else:
+                    # Exploration: random mutation
+                    child, child_fitness = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
+                    P_m = 0.5 * (P_div + (K * (f_max - child_fitness) / (f_max - f_min)))
+                    mask = np.random.rand(d) < P_m
+                    child[mask] = np.random.randint(0, n, size=mask.sum())
+                    new_pop[i+1, :] = child.copy()
+            population = new_pop  # Update population with new children
+
+            fitness_history[gen] = global_best
+            # fitness_history[gen] = fitnesses_cpue[sorted_idx[0]] ???
+
+            continue 
 
         # Parent selection
         children = []
@@ -320,113 +415,11 @@ def genetic_algorithm_gpu(
         n_cross_pairs = n_crossover // 2
         if n_crossover % 2 == 1:
             n_cross_pairs += 1
-        for _ in range(n_cross_pairs):
-            # Choose parent selection method
-            if parent_selection == 'best_50':
+
+        if parent_selection == 'best_50':        
+            for _ in range(n_cross_pairs):
                 mom = best_50_selection(population, population_size, sorted_idx)
                 dad = best_50_selection(population, population_size, sorted_idx)
-            elif parent_selection == 'tournament':
-                mom = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
-                dad = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
-            elif parent_selection == 'roulette':
-                mom = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
-                dad = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
-
-            elif parent_selection == 'ACROMUSE_adaptive':
-                w_raw = fitnesses_cpu.copy()  # keep raw fitnesses for later use
-                w = w_raw / w_raw.sum()
-
-                B_total_cpu = cp.asnumpy(B_total_gpu)  # (pop_size, 3)
-                angle_vectors_cpu = cp.asnumpy(angle_vectors)  # (pop_size, d)
-
-                # best_idx = np.argmax(fitnesses_cpu) # max fitness wins
-                best_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
-
-                best_f = fitnesses_cpu[best_idx]
-
-                global_best = best_f
-                # global_best_angles = angle_vectors_cpu[best_idx]
-
-                new_pop = np.empty((population_size, d), dtype=population.dtype)
-                angle_range = np.max(angle_vectors_cpu) - np.min(angle_vectors_cpu)
-
-                elite_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
-                elite = population[elite_idx].copy()
-                new_pop[0] = elite
-
-                if np.cos(angle_vectors_cpu).any() < -1.0 or np.cos(angle_vectors_cpu).any() > 1.0:
-                    print("Warning: cos(angle_vectors) out of [-1, 1] range!")
-                    print("cos angles", np.cos(angle_vectors_cpu))
-                if np.sin(angle_vectors_cpu).any() < -1.0 or np.sin(angle_vectors_cpu).any() > 1.0:
-                    print("sin angles", np.sin(angle_vectors_cpu))
-                C = np.sum(np.cos(angle_vectors_cpu), axis=0) * (1/population_size)
-                S = np.sum(np.sin(angle_vectors_cpu), axis=0) * (1/population_size)
-                if np.abs(C).any() > 1.0 or np.abs(S).any() > 1.0:
-                    print("Warning: cos/sin angles out of [-1, 1] range!")
-                    print("C:", C, "S:", S)
-                R = np.sqrt(C**2 + S**2)  # (d,)
-                if np.any(-2 * np.log(R)<0):
-                    print("Warning: R is too small, leading to negative std!")
-                    print("C:", C)
-                    print("S:", S)
-                    print("R:", R)
-                    print("cos angles", np.cos(angle_vectors_cpu))
-                    print("sin angles", np.sin(angle_vectors_cpu))
-                G_std = np.sqrt(-2 * np.log(R))  # (d,) std of angles in radians
-                SPD = float(np.mean(G_std / angle_range)) 
-
-                w = fitnesses_cpu / fitnesses_cpu.sum()  # (P,)
-
-                C_w = np.sum(w[:, None] * np.cos(angle_vectors_cpu), axis=0)
-
-                S_w = np.sum(w[:, None] * np.sin(angle_vectors_cpu), axis=0)
-                R_w = np.sqrt(C_w**2 + S_w**2)
-                if np.any(-2 * np.log(R_w)<0):
-                    print("Warning: R_w is too small, leading to negative std!")
-                    print("R_w:", R_w)
-
-                G_w_std = np.sqrt(-2 * np.log(R_w))  # std of angles in radians
-
-                HPD = float(np.mean(G_w_std / angle_range))  # scalar
-                HPD_values[gen] = HPD
-                SPD_values[gen] = SPD
-
-                SPD_max = 0.4
-                HPD_max = 0.3
-                K1 = 0.4
-                K2 = 0.8
-                K = 0.5
-                P_c = (SPD / SPD_max)*(K2-K1) + K1
-                P_div = ((SPD_max - SPD)/SPD_max)*K
-                f_max = np.max(w_raw)
-                f_min = np.min(w_raw)
-                for i in range(population_size-1):
-                    if np.random.rand() < P_c:
-                        # Exploitation: uniform crossover, low mutation
-                        mom, _ = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
-                        dad, _ = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
-                        # uniform crossover
-                        toss = np.random.rand(d)
-                        child = np.where(toss < 0.5, mom, dad) 
-                        # Low mutation
-                        mask = np.random.rand(d) < 0.01
-                        child[mask] = np.random.randint(0, n, size=mask.sum())
-                        # children.append(child)
-                        new_pop[i+1, :] = child.copy()
-                    else:
-                        # Exploration: random mutation
-                        child, child_fitness = ACROMUSE_adaptive(population, w_raw, T_size_max, population_size, HPD, HPD_max, minimize=minimize)
-                        P_m = 0.5 * (P_div + (K * (f_max - child_fitness) / (f_max - f_min)))
-                        mask = np.random.rand(d) < P_m
-                        child[mask] = np.random.randint(0, n, size=mask.sum())
-                        new_pop[i+1, :] = child.copy()
-                population = new_pop  # Update population with new children
-
-                fitness_history[gen] = global_best
-                # fitness_history[gen] = fitnesses_cpue[sorted_idx[0]] ???
-
-                continue 
-
             # single-point crossover
             cp_pt = np.random.randint(1, d)
             c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
@@ -436,8 +429,44 @@ def genetic_algorithm_gpu(
             c2[mask] = np.random.randint(0, n, size=mask.sum())
             children.append(c1)
             children.append(c2)
+
+        elif parent_selection == 'tournament':
+            for _ in range(n_cross_pairs):
+                mom = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
+                dad = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
+            # single-point crossover
+            cp_pt = np.random.randint(1, d)
+            c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
+            c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
+            mask = np.random.rand(d) < mutation_rate
+            c1[mask] = np.random.randint(0, n, size=mask.sum())
+            c2[mask] = np.random.randint(0, n, size=mask.sum())
+            children.append(c1)
+            children.append(c2)
+
+        elif parent_selection == 'roulette':
+            for _ in range(n_cross_pairs):
+                mom = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
+                dad = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
+            # single-point crossover
+            cp_pt = np.random.randint(1, d)
+            c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
+            c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
+            mask = np.random.rand(d) < mutation_rate
+            c1[mask] = np.random.randint(0, n, size=mask.sum())
+            c2[mask] = np.random.randint(0, n, size=mask.sum())
+            children.append(c1)
+            children.append(c2)
+
+
         # If overproduced by one (n_crossover is odd), drop the last
         children = np.array(children[:n_crossover], dtype=np.int32)
+        if len(children) == 0:
+            children = np.empty((0, population.shape[1]), dtype=np.int32)
+            print("Warning: No children produced!")
+        else:
+            children = np.array(children[:n_crossover], dtype=np.int32)
+
 
         # Check if sizes match
         population = np.vstack((elites, children))
