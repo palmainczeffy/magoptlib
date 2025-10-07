@@ -321,13 +321,9 @@ def genetic_algorithm_gpu(
             B_total_cpu = cp.asnumpy(B_total_gpu)  # (pop_size, 3)
             angle_vectors_cpu = cp.asnumpy(angle_vectors)  # (pop_size, d)
 
-            # best_idx = np.argmax(fitnesses_cpu) # max fitness wins
             best_idx = np.argmin(fitnesses_cpu) if minimize else np.argmax(fitnesses_cpu)
 
             best_f = fitnesses_cpu[best_idx]
-
-            global_best = best_f
-            # global_best_angles = angle_vectors_cpu[best_idx]
 
             new_pop = np.empty((population_size, d), dtype=population.dtype)
             angle_range = np.max(angle_vectors_cpu) - np.min(angle_vectors_cpu)
@@ -404,8 +400,7 @@ def genetic_algorithm_gpu(
                     new_pop[i+1, :] = child.copy()
             population = new_pop  # Update population with new children
 
-            fitness_history[gen] = global_best
-            # fitness_history[gen] = fitnesses_cpue[sorted_idx[0]] ???
+            fitness_history[gen] = best_f
 
             continue 
 
@@ -420,43 +415,43 @@ def genetic_algorithm_gpu(
             for _ in range(n_cross_pairs):
                 mom = best_50_selection(population, population_size, sorted_idx)
                 dad = best_50_selection(population, population_size, sorted_idx)
-            # single-point crossover
-            cp_pt = np.random.randint(1, d)
-            c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
-            c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
-            mask = np.random.rand(d) < mutation_rate
-            c1[mask] = np.random.randint(0, n, size=mask.sum())
-            c2[mask] = np.random.randint(0, n, size=mask.sum())
-            children.append(c1)
-            children.append(c2)
+                # single-point crossover
+                cp_pt = np.random.randint(1, d)
+                c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
+                c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
+                mask = np.random.rand(d) < mutation_rate
+                c1[mask] = np.random.randint(0, n, size=mask.sum())
+                c2[mask] = np.random.randint(0, n, size=mask.sum())
+                children.append(c1)
+                children.append(c2)
 
         elif parent_selection == 'tournament':
             for _ in range(n_cross_pairs):
                 mom = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
                 dad = tournament_selection(population, fitnesses_cpu, T_size=5, population_size=population_size, max_fitness_wins=not minimize)
-            # single-point crossover
-            cp_pt = np.random.randint(1, d)
-            c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
-            c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
-            mask = np.random.rand(d) < mutation_rate
-            c1[mask] = np.random.randint(0, n, size=mask.sum())
-            c2[mask] = np.random.randint(0, n, size=mask.sum())
-            children.append(c1)
-            children.append(c2)
+                # single-point crossover
+                cp_pt = np.random.randint(1, d)
+                c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
+                c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
+                mask = np.random.rand(d) < mutation_rate
+                c1[mask] = np.random.randint(0, n, size=mask.sum())
+                c2[mask] = np.random.randint(0, n, size=mask.sum())
+                children.append(c1)
+                children.append(c2)
 
         elif parent_selection == 'roulette':
             for _ in range(n_cross_pairs):
                 mom = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
                 dad = roulette_wheel_selection(population, fitnesses_cpu, population_size, minimize=minimize)
-            # single-point crossover
-            cp_pt = np.random.randint(1, d)
-            c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
-            c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
-            mask = np.random.rand(d) < mutation_rate
-            c1[mask] = np.random.randint(0, n, size=mask.sum())
-            c2[mask] = np.random.randint(0, n, size=mask.sum())
-            children.append(c1)
-            children.append(c2)
+                # single-point crossover
+                cp_pt = np.random.randint(1, d)
+                c1 = np.concatenate((mom[:cp_pt], dad[cp_pt:]))
+                c2 = np.concatenate((dad[:cp_pt], mom[cp_pt:]))
+                mask = np.random.rand(d) < mutation_rate
+                c1[mask] = np.random.randint(0, n, size=mask.sum())
+                c2[mask] = np.random.randint(0, n, size=mask.sum())
+                children.append(c1)
+                children.append(c2)
 
 
         # If overproduced by one (n_crossover is odd), drop the last
