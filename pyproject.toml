@@ -23,7 +23,6 @@ sphinx-autoapi = "^3.0"
 sphinx-math-dollar = "^1.2"
 jupyter = "^1.0"
 
-[tool.poetry.dev-dependencies]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
