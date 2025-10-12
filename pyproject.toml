@@ -13,6 +13,11 @@ scipy = ">=1.13.0"
 matplotlib =">=3.7"
 scikit-learn = "^1.5.1"
 magpylib = "^5.1.1"
+sphinx = "^7.3"
+sphinx-rtd-theme = "^2.0"
+myst-nb = "^1.1"
+sphinx-autoapi = "^3.0"
+sphinx-math-dollar = "^1.2"
 
 [tool.poetry.dev-dependencies]
 
