@@ -1,7 +1,5 @@
 # magoptlib
 
-Magoptlib is a Python library designed for the Global Spherical Harmonic Analysis (GSHA) of magnetic fields. The library provides tools for  calculating spherical harmonic (SH) coefficients from measurement data on a sphere, and calculating the magnetic field values at any arbitrary location outside this sphere. It supports the preparation of the optimization of magnet placement. For further information please read the documentation or run the inroduction.ipynb file.
-
 Global spherical harmonic analysis for optimal magnet positioning.
 
 `magoptlib` is a Python toolkit that helps model, analyse, and optimise
