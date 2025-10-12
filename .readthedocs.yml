@@ -27,18 +27,21 @@
 #   configuration: docs/conf.py
 
 version: 2
+
 build:
   os: ubuntu-24.04
   tools:
-    python: "3.12"
+    python: "3.11"        # 3.11 avoids some 3.12 edge cases
   jobs:
     environment:
-      POETRY_VIRTUALENVS_CREATE: "false"
+      POETRY_VIRTUALENVS_CREATE: "false"   # install into RTD's venv
     post_create_environment:
       - pip install --upgrade pip
-      - pip install poetry
+      - pip install "poetry>=1.6"
     post_install:
-      - poetry install --with docs
+      - poetry install --with docs --no-interaction --no-ansi
+
 sphinx:
   configuration: docs/conf.py
+
 
