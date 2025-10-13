@@ -24,6 +24,7 @@ sphinx-math-dollar = "^1.2"
 jupyter = "^1.0"
 
 
+
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pytest-cov = "^5.0.0"
