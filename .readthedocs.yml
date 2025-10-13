@@ -26,21 +26,37 @@
 # sphinx:
 #   configuration: docs/conf.py
 
-version: 2
+# version: 2
 
+# build:
+#   os: ubuntu-24.04
+#   tools:
+#     python: "3.11"   # safer than 3.12 for many stacks
+#   jobs:
+#     post_create_environment:
+#       - pip install --upgrade pip
+#       - pip install "poetry>=1.6"
+#       # Tell Poetry to use RTD's venv (instead of creating its own)
+#       - poetry config virtualenvs.create false
+#     post_install:
+#       - poetry install --with docs --no-interaction --no-ansi
+
+# sphinx:
+#   configuration: docs/conf.py
+version: 2
 build:
   os: ubuntu-24.04
   tools:
-    python: "3.11"   # safer than 3.12 for many stacks
+    python: "3.11"
   jobs:
     post_create_environment:
       - pip install --upgrade pip
       - pip install "poetry>=1.6"
-      # Tell Poetry to use RTD's venv (instead of creating its own)
       - poetry config virtualenvs.create false
     post_install:
       - poetry install --with docs --no-interaction --no-ansi
-
+      # fallback to ensure the Sphinx plugins are present
+      - pip install myst-nb sphinx-autoapi sphinx-rtd-theme sphinx-math-dollar
 sphinx:
   configuration: docs/conf.py
 
