@@ -21,9 +21,16 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.mathjax",
-    "sphinx_math_dollar"
+    "sphinx_math_dollar", 
+    "myst_parser"
 
 ]
+
+myst_enable_extensions = [
+    "dollarmath",
+    "amsmath",
+]
+
 
 mathjax_config = {
     'tex2jax': {
