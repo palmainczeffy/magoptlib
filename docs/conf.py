@@ -20,15 +20,10 @@ extensions = [
     "autoapi.extension",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinx.ext.mathjax",
-    "myst_parser"
-
+    "sphinx.ext.mathjax"
 ]
 
-myst_enable_extensions = [
-    "dollarmath",
-    "amsmath",
-]
+myst_enable_extensions = ["dollarmath", "amsmath"]
 
 
 mathjax_config = {
