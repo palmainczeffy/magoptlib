@@ -37,7 +37,17 @@ mathjax3_config = {
   "tex": {
     "inlineMath": [['\\(', '\\)']],
     "displayMath": [["\\[", "\\]"]],
-  }
+    "tags": "ams",
+        # Format for numbered equations
+        "tagformat": {
+            "id": "eq-{number}",  # give equations clean IDs
+            "tag": "\\text{(%s)}",  # keep the numbering style (1)
+        },
+  },
+  "options": {
+        # Makes sure numbers appear inline, right-aligned
+        "processHtmlClass": "math|output_area",
+    },
 }
 
 autoapi_dirs = ["../src"]
