@@ -1,0 +1,16 @@
+/* Keep equation numbers inline and clickable, not above equations */
+div.math {
+  position: relative;
+}
+
+div.math .eqno {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Hide those floating paragraph-style permalinks (¶) */
+div.math .headerlink {
+  display: none !important;
+}
